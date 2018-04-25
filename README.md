@@ -36,8 +36,9 @@ To build a bare bones infra consisting on a single VPC with a single private sub
     # And interactively choose an env, then the first layer, 001_vpc
     # Then 'plan' or 'apply'
 
-This will plan or build the infrastructure. When finished, run `./do` again, but choose to destroy. Then,
+This will plan or build the infrastructure. When finished, teardown the infrastructure.
 
+    ./do # follow prompts to destroy
     ./do teardown
 
 This will remove the cleanup the state bucket in S3.
@@ -47,6 +48,7 @@ This will remove the cleanup the state bucket in S3.
     Python 2.7
     Ansible
     AWS Cli
+    AWS Vault
     Boto
     Terraform
     Bash
@@ -58,24 +60,6 @@ Copy `envrc.template` to `.envrc` and fill in the appropriate details.
 ### Add your own environment
 
 Copy `./environments/999_example` to a new directory under ./environments.
-
-## Prepare the system
-
-Create the S3 bucket required for Terraform state management:
-
-    ./do bootstrap
-
-### Run interactively
-
-    ./do
-
-And follow the prompts.
-
-## When finished, cleanup
-
-    ./do teardown
-
-This removes both the infra and then finally the S3 bucket for state management.
 
 ## Run headlessly
 
