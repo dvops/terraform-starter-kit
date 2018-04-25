@@ -17,6 +17,8 @@
     s3_bucket:
       name: "{{ lookup('env', 'STATE_BUCKET') }}"
       versioning: no
+      aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+      aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
       tags:
         description:        "{{ lookup('env', 'PLATFORM_PROJECT') }} TF Root State Bucket"
         owner:              "{{ lookup('env', 'PLATFORM_OWNER') }}"
@@ -30,6 +32,8 @@
     dynamodb_table:
       name: "{{ lookup('env', 'DYNAMO_BACKEND_TABLE') }}"
       hash_key_name: "LockID"
+      aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+      aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
       tags:
         description:        "{{ lookup('env', 'PLATFORM_PROJECT') }} Terraform lock state table"
         owner:              "{{ lookup('env', 'PLATFORM_OWNER') }}"

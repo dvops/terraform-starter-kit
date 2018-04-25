@@ -16,10 +16,14 @@
   - name: Delete root S3 state bucket
     s3_bucket:
       name: "{{ lookup('env', 'STATE_BUCKET') }}"
+      aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+      aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
       state: absent
       force: yes
 
   - name: Delete DynamoDB Lock Table
     dynamodb_table:
       name: "{{ lookup('env', 'DYNAMO_BACKEND_TABLE') }}"
+      aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+      aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
       state: absent

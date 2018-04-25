@@ -57,27 +57,37 @@ exec >& >(exec logger -s -t "$(basename $0) ${SID}") 2>&1
 #  / /_/ (__  |__  ) /_/ / / / / / /  __/  / /  / /_/ / /  __/
 #  \__,_/____/____/\__,_/_/ /_/ /_/\___/  /_/   \____/_/\___/
 #
+
+# This code has been superseded by the use of aws-vault
+
 # Setup assume role tings
-unset AWS_SESSION_TOKEN
+# unset AWS_SESSION_TOKEN
 
-temp_role=$(aws sts assume-role \
-  --role-arn "arn:aws:iam::${AWS_ACCOUNT_NUMBER}:role/${AWS_ROLE}" \
-  --role-session-name "${SID}" \
-  --duration-seconds 3600)
+# echo "Enter the 6-digit MFA code: "
 
-# Check everything is OK and print any error string
-echo $temp_role
+# read MFA_CODE
+
+# temp_role=$(aws sts assume-role \
+#   --role-arn "arn:aws:iam::${AWS_ACCOUNT_NUMBER}:role/${AWS_ROLE}" \
+#   --profile ${AWS_PROFILE} \
+#   --serial-number ${AWS_MFA} \
+#   --token-code ${MFA_CODE} \
+#   --role-session-name "${SID}" \
+#   --duration-seconds 3600)
+
+# # Check everything is OK and print any error string
+# echo $temp_role
 
 
-export AWS_ACCESS_KEY_ID=$(echo $temp_role | jq .Credentials.AccessKeyId | xargs)
-export AWS_SECRET_ACCESS_KEY=$(echo $temp_role | jq .Credentials.SecretAccessKey | xargs)
-export AWS_SESSION_TOKEN=$(echo $temp_role | jq .Credentials.SessionToken | xargs)
+# export AWS_ACCESS_KEY_ID=$(echo $temp_role | jq .Credentials.AccessKeyId | xargs)
+# export AWS_SECRET_ACCESS_KEY=$(echo $temp_role | jq .Credentials.SecretAccessKey | xargs)
+# export AWS_SESSION_TOKEN=$(echo $temp_role | jq .Credentials.SessionToken | xargs)
 
-if  [ -z "$AWS_ACCESS_KEY_ID"  -o  -z "$AWS_SECRET_ACCESS_KEY" -o -z  "$AWS_SESSION_TOKEN" ] ; then
-  echo "Unable to assume temporary role named '${SID}' using '${AWS_ACCOUNT_NUMBER}:role/${AWS_ROLE}'."
-  echo "Have you set up your environment correctly?"
-  exit 1
-fi
+# if  [ -z "$AWS_ACCESS_KEY_ID"  -o  -z "$AWS_SECRET_ACCESS_KEY" -o -z  "$AWS_SESSION_TOKEN" ] ; then
+#   echo "Unable to assume temporary role named '${SID}' using '${AWS_ACCOUNT_NUMBER}:role/${AWS_ROLE}'."
+#   echo "Have you set up your environment correctly?"
+#   exit 1
+# fi
 
 
 #------------------------------------------------------------------------------
@@ -139,7 +149,7 @@ plan() {
 
   exec &>/dev/tty
   init
-  terraform plan -var-file="../../environments/${env}/main.tfvars" -var "layer=${layer}" -var "state_bucket=${STATE_BUCKET}" -var "state_region=${AWS_REGION}"
+  aws-vault exec ${AWS_PROFILE} -- terraform plan -var-file="../../environments/${env}/main.tfvars" -var "layer=${layer}" -var "state_bucket=${STATE_BUCKET}" -var "state_region=${AWS_REGION}"
 }
 
 
@@ -169,7 +179,7 @@ apply() {
 
   exec &>/dev/tty
   init
-  terraform apply -var-file="../../environments/${env}/main.tfvars" -var "layer=${layer}" -var "state_bucket=${STATE_BUCKET}" -var "state_region=${AWS_REGION}"
+  aws-vault exec ${AWS_PROFILE} -- terraform apply -var-file="../../environments/${env}/main.tfvars" -var "layer=${layer}" -var "state_bucket=${STATE_BUCKET}" -var "state_region=${AWS_REGION}"
 }
 
 
@@ -197,7 +207,7 @@ output() {
   cd layers/${layer}
 
   exec &>/dev/tty
-  terraform output -json
+  aws-vault exec ${AWS_PROFILE} -- terraform output -json
 }
 
 
@@ -226,7 +236,7 @@ destroy() {
 
   exec &>/dev/tty
   init
-  terraform destroy -var-file="../../environments/${env}/main.tfvars" -var "layer=${layer}" -var "state_bucket=${STATE_BUCKET}" -var "state_region=${AWS_REGION}"
+  aws-vault exec ${AWS_PROFILE} -- terraform destroy -var-file="../../environments/${env}/main.tfvars" -var "layer=${layer}" -var "state_bucket=${STATE_BUCKET}" -var "state_region=${AWS_REGION}"
 }
 
 
@@ -262,10 +272,10 @@ interactive() {
   # simplicity in the TF code and so that init works properly
 
   if [ "${command}" = "output" ]; then
-    terraform output -json
+    aws-vault exec ${AWS_PROFILE} -- terraform output -json
   else
     init
-    terraform ${command} -var-file="../../${env}main.tfvars" -var "layer=${layer}" -var "state_bucket=${STATE_BUCKET}" -var "state_region=${AWS_REGION}"
+    aws-vault exec ${AWS_PROFILE} -- terraform ${command} -var-file="../../${env}main.tfvars" -var "layer=${layer}" -var "state_bucket=${STATE_BUCKET}" -var "state_region=${AWS_REGION}"
   fi
 }
 
@@ -276,7 +286,7 @@ interactive() {
 # /_/_/ /_/_/\__/
 #------------------------------------------------------------------------------
 init() {
-  terraform init \
+  aws-vault exec ${AWS_PROFILE} -- terraform init \
     -backend-config="bucket=${STATE_BUCKET}" \
     -backend-config="key=${PLATFORM_PROJECT}/${env}/${layer}.tfstate" \
     -backend-config="region=${AWS_REGION}" \
@@ -292,7 +302,7 @@ init() {
 # /_.___/\____/\____/\__/____/\__/_/   \__,_/ .___/
 #                                          /_/
 bootstrap() {
-  ansible-playbook -vvv -i 999_hosts.ini 000_bootstrap.yml
+  aws-vault exec ${AWS_PROFILE} -- ansible-playbook 000_bootstrap.yml
 }
 
 
@@ -304,7 +314,7 @@ bootstrap() {
 # \__/\___/\__,_/_/   \__,_/\____/|__/|__/_/ /_/
 #
 teardown() {
-  ansible-playbook -i 999_hosts.ini 001_teardown.yml
+  aws-vault exec ${AWS_PROFILE} -- ansible-playbook 001_teardown.yml
 }
 
 

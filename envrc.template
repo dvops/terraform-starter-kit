@@ -1,4 +1,5 @@
 export AWS_ACCOUNT_NUMBER=XXXXXXXXXXXX
+export AWS_PROFILE=default
 export KOPS_STATE_STORE=s3://platform-k8s-blah
 export AWS_ROLE=AdminRole
 export AWS_REGION=us-east-1
